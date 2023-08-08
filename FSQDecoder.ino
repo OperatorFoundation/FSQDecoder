@@ -73,6 +73,14 @@ void loop()
   float n;
   int i;
 
+  int loudestBin;
+  int loudestBinRepeats;
+
+  // TODO: How many times was a particular bin the loudest in a row
+  // TODO: When the tone changes check the counter to see if it reached a level of "confidence" (we will try 10 for a condfidence test for now**) before resetting to 0 
+  // **Check FLDigi's FSQ decoder code for the correct value
+  // TODO: Collect a pair of confident tones and discover the difference
+
   if (myFFT.available())
   {
     // each time new FFT data is available
@@ -80,12 +88,14 @@ void loop()
 
     Serial.write(0x1A);
     
-    for (i=0; i<256; i++)
+    for (i=0; i<256; i++) // 256 is the total number of bins
     {
       n = myFFT.read(i);
 
       Serial.write(0xDD);
       
+      // TODO: Which is loudest (biggest value of n of all of the 256 bins) bin number 
+
       if (n >= 0.01)
       {
         drawBin(i, n);
