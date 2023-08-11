@@ -70,11 +70,17 @@ void setup() {
 
 void loop()
 {
-  float n;
-  int i;
+  float binValue;
+  int binNumber;
 
-  int loudestBin;
-  int loudestBinRepeats;
+  int notABin = 300;
+  int loudestBin = 300;
+  float loudestBinValue = 0.0;
+  int loudestBinRepeats = 0;
+
+  int confidenceMinRepeats = 10;
+  int confidentToneA = 300;
+  int confidentToneB = 300;
 
   // TODO: How many times was a particular bin the loudest in a row
   // TODO: When the tone changes check the counter to see if it reached a level of "confidence" (we will try 10 for a condfidence test for now**) before resetting to 0 
@@ -88,21 +94,76 @@ void loop()
 
     Serial.write(0x1A);
     
-    for (i=0; i<256; i++) // 256 is the total number of bins
+    for (binNumber=0; binNumber<256; binNumber++) // 256 is the total number of bins
     {
-      n = myFFT.read(i);
+      binValue = myFFT.read(binNumber);
 
       Serial.write(0xDD);
       
       // TODO: Which is loudest (biggest value of n of all of the 256 bins) bin number 
 
-      if (n >= 0.01)
+      if (binValue >= 0.01)
       {
-        drawBin(i, n);
+        drawBin(binNumber, binValue);
+
+        
+        if (binValue > loudestBinValue) // This is the loudest we've seen so far
+        {
+          // Did we have a previous loud bin?
+          if (loudestBinRepeats > 0 && loudestBinValue > 0.0 && loudestBin != notABin) // We did
+          {
+            // Is it the same bin?
+            if (binNumber == loudestBin) // This is the same bin add a repeat
+            {
+              loudestBinRepeats += 1;
+            }
+            else // This is a new loudest bin but we have one already, lets save the previous one if it is good enough
+            {
+              // Can we be confident that we have seen it enough times to save it to a pair?
+              if (loudestBinRepeats >= confidenceMinRepeats)
+              {
+                if (confidentToneA == notABin) // A is empty (probably a first run)
+                {
+                  confidentToneA = loudestBin;
+                }
+                else if (confidentToneB == notABin) // B is empty
+                {
+                  confidentToneB = loudestBin; // This means we now have a complete pair
+                  Serial.println("We found a new pair:");
+                  Serial.print("Tone A: "); Serial.println(confidentToneA);
+                  Serial.print("Tone B: "); Serial.println(confidentToneB);
+                }
+                else // We have a previous AB pair, starting over
+                {
+                  confidentToneA = loudestBin;
+                  confidentToneB = notABin;
+                }
+              }
+              else 
+              {
+                Serial.println("The loudest bin has changed, but the previous bin did not repeat enough times. Discarding the previous bin tracking and monitoring the new bin.");
+                loudestBin = binNumber;
+                loudestBinValue = binValue;
+                loudestBinRepeats = 1;
+              }
+            }
+            
+          }
+          else // This is our first loudest bin
+          {
+            loudestBin = binNumber;
+            loudestBinValue = binValue;
+            loudestBinRepeats += 1;
+          }          
+        }
+        else if (binValue == loudestBinValue)
+        {
+          loudestBinRepeats += 1;
+        }
       }
       else
       {
-        drawBin(i, 0);        
+        drawBin(binNumber, 0);        
       }
     }
   }
