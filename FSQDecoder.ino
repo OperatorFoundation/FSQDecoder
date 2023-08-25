@@ -70,13 +70,13 @@ void setup()
 
 void loop()
 {
+  struct Bin soundingBins[255];
+  int totalSoundingBins = 0;
   float binValue;
   int binNumber;
 
   if (myFFT.available()) 
   {
-    struct Bin soundingBins[255];
-    int soundingBinIndex = 0;
     // each time new FFT data is available
     // print it all to the Arduino Serial Monitor
     Serial.print("FFT: ");
@@ -89,8 +89,27 @@ void loop()
         Serial.print(" ");
 
         struct Bin soundingBin = {binNumber, binValue, 1};
-        soundingBins[soundingBinIndex] = soundingBin;
-        soundingBinIndex += 1;
+        bool binAlreadyStored = false;
+
+        for (int thisBin = 0; thisBin < totalSoundingBins; thisBin++) 
+        {
+          if (soundingBin.binNumber == soundingBins[thisBin].binNumber)
+          {
+            binAlreadyStored = true;
+
+            if (soundingBin.value >= soundingBins[thisBin].value)
+            {
+              soundingBins[thisBin].value = soundingBin.value;
+              soundingBins[thisBin].repeats += 1;
+            }            
+          }
+        }
+
+        if (!binAlreadyStored)
+        {
+          soundingBins[totalSoundingBins] = soundingBin;
+          totalSoundingBins += 1;
+        }
       } 
       else 
       {
@@ -99,8 +118,8 @@ void loop()
     } // End bin loop (256 rounds)
 
     Serial.println();
-    Serial.println("Sounding Bins: ");
-    Serial.println(soundingBinIndex);
+    Serial.println("Total Sounding Bins: ");
+    Serial.println(totalSoundingBins);
 
 
   } // if FFT.available
