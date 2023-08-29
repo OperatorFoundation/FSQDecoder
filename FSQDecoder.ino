@@ -51,14 +51,13 @@ struct Bin {
 
 struct Bin soundingBins[255];
 int totalSoundingBins = 0;
-struct Bin loudestBin = {-1, -1, 0};
+struct Bin notabin = {-1, -1, 0};
+struct Bin loudestBin = notabin;
 
-struct Bin confidentBin1a = {-1, -1, 0};
-struct Bin confidentBin1b = {-1, -1, 0};
-struct Bin confidentBin2a = {-1, -1, 0};
-struct Bin confidentBin2b = {-1, -1, 0};
-struct Bin confidentBins[4];
-int totalConfidentBins = 4;
+struct Bin confidentBin1 = notabin;
+struct Bin confidentBin2 = notabin;
+struct Bin loudestBins[4];
+int totalLoudestBins = 4;
 
 
 void setup() 
@@ -66,10 +65,10 @@ void setup()
   Serial.begin(2000000);
   delay(1000);
 
-  confidentBins[0] = confidentBin1a;
-  confidentBins[0] = confidentBin1b;
-  confidentBins[0] = confidentBin2a;
-  confidentBins[0] = confidentBin2b;
+  loudestBins[0] = notabin;
+  loudestBins[1] = notabin;
+  loudestBins[2] = notabin;
+  loudestBins[3] = notabin;
 
   // Audio connections require memory to work.  For more
   // detailed information, see the MemoryAndCpuUsage example
@@ -81,8 +80,10 @@ void setup()
   myFFT.windowFunction(AudioWindowHanning1024);
 
   // playSyntheticWave();
-
+  Serial.println();
+  Serial.println("♫⋆｡♪ ₊˚♬ ﾟ.");
   Serial.println("FSQDecoder Ready!");
+  Serial.println("♫⋆｡♪ ₊˚♬ ﾟ.");
   Serial.println();
 }
 
@@ -106,22 +107,19 @@ void loop()
         // Save this bin in soundingBins
         soundingBins[totalSoundingBins] = soundingBin;
         totalSoundingBins += 1;
-        Serial.println();
-        Serial.println("Stored a new bin: ");
-        Serial.print("Bin number: "); Serial.println(soundingBin.binNumber);
-        Serial.print("Bin value: "); Serial.println(soundingBin.value);
-        Serial.print("Total sounding bins: "); Serial.println(totalSoundingBins);
-        Serial.println();
+        // Serial.println();
+        // Serial.println("Stored a new bin: ");
+        // Serial.print("Bin number: "); Serial.println(soundingBin.binNumber);
+        // Serial.print("Bin value: "); Serial.println(soundingBin.value);
+        // Serial.print("Bin repeats: "); Serial.println(soundingBin.repeats);
+        // Serial.print("Total sounding bins: "); Serial.println(totalSoundingBins);
+        // Serial.println();
       } 
       else 
       {
         // Serial.print("  -  "); // don't print "0.00"
       }
     } // End bin loop (256 rounds)
-
-    Serial.println();
-    Serial.print("Total Sounding Bins: "); Serial.println(totalSoundingBins);
-    Serial.println();
 
     if (totalSoundingBins > 0)
     {
@@ -131,24 +129,11 @@ void loop()
         if (soundingBins[thisBin].value > loudestBin.value)
         {
           loudestBin = soundingBins[thisBin];
-
-          Serial.println();
-          Serial.println("Found a new loudest bin: ");
-          Serial.print("Bin number: "); Serial.println(loudestBin.binNumber);
-          Serial.print("Bin value: "); Serial.println(loudestBin.value);
-          Serial.println();
-
         }
       }
 
       if (loudestBin.binNumber > 0)
       {
-        Serial.println("♫⋆｡♪ ₊˚♬ ﾟ.");
-        Serial.println("Loudest bin for this round: ");
-        Serial.print("Bin number: "); Serial.println(loudestBin.binNumber);
-        Serial.print("Bin value: "); Serial.println(loudestBin.value);
-        Serial.println("♫⋆｡♪ ₊˚♬ ﾟ.");
-
         handleLoudestBin(loudestBin);
       }
     }
@@ -162,56 +147,89 @@ void loop()
 
 void handleLoudestBin(struct Bin newLoudestBin)
 {
-  bool alreadyAConfidentBin = false;
+  bool alreadyALoudestBin = false;
 
-  for (int thisBin = 0; thisBin < totalConfidentBins; thisBin++)
+  for (int thisBin = 0; thisBin < totalLoudestBins; thisBin++)
   {
-    if (newLoudestBin.binNumber == confidentBins[thisBin].binNumber)
+    if (newLoudestBin.binNumber == loudestBins[thisBin].binNumber)
     {
-      alreadyAConfidentBin = true;
-      confidentBins[thisBin].repeats += 1;
+      alreadyALoudestBin = true;
+      loudestBins[thisBin].repeats += 1;
 
-      Serial.print(newLoudestBin.binNumber); Serial.println(" is already a confident bin.");
-      Serial.print("Repeats: "); Serial.println(confidentBins[thisBin].repeats);
+      if (loudestBins[thisBin].repeats > 7)
+      {
+        handleConfidentBin(loudestBins[thisBin]);
+        loudestBins[thisBin] = notabin;
+      }
+
+      return;
     }
   }
 
-  if (!alreadyAConfidentBin)
+  if (!alreadyALoudestBin)
   {
     int emptyBinIndex = -1;
 
-    Serial.print(newLoudestBin.binNumber); Serial.println(" is a newly confident bin!");
-
-    for (int thisBin = 0; thisBin < totalConfidentBins; thisBin++)
+    for (int thisBin = 0; thisBin < totalLoudestBins; thisBin++)
     {
-      if (confidentBins[thisBin].binNumber < 0)
+      if (loudestBins[thisBin].binNumber < 0)
       {
         emptyBinIndex = thisBin;
         break;
       }
     }
-
-    // All of the confidence bins have been filled, and we have a new bin, start a new group of confidence bins
+    
     if (emptyBinIndex < 0)
     {
-      Serial.println();
-      Serial.println("All four confidence bins have values.");
-      Serial.print("bin: "); Serial.println(confidentBins[0].binNumber); 
-      Serial.print("repeats: "); Serial.println(confidentBins[0].repeats);
-      Serial.print("bin: "); Serial.println(confidentBins[1].binNumber); 
-      Serial.print("repeats: "); Serial.println(confidentBins[1].repeats);
-      Serial.print("bin: "); Serial.println(confidentBins[2].binNumber); 
-      Serial.print("repeats: "); Serial.println(confidentBins[2].repeats);
-      Serial.print("bin: "); Serial.println(confidentBins[3].binNumber);
-      Serial.print("repeats: "); Serial.println(confidentBins[3].repeats);
-      Serial.println();
+      loudestBins[0] = notabin;
+      loudestBins[1] = notabin;
+      loudestBins[2] = notabin;
+      loudestBins[3] = notabin;
     }
     else
     {
-      confidentBins[emptyBinIndex] = newLoudestBin;
+      // Check the previous bin to see if it has been repeated enough to be a confident bin
+      if (emptyBinIndex > 0)
+      {
+        if (loudestBins[emptyBinIndex - 1].repeats > 7) // We have a bin that has repeated enough times.
+        {
+          handleConfidentBin(loudestBins[emptyBinIndex - 1]);
+          loudestBins[emptyBinIndex - 1] = newLoudestBin;
+        }
+      }
+
+      loudestBins[emptyBinIndex] = newLoudestBin;
     }
   }
-  
+}
+
+void handleConfidentBin(struct Bin newConfidentBin)
+{
+  if (confidentBin1.binNumber == notabin.binNumber || confidentBin1.binNumber == newConfidentBin.binNumber)
+  {
+    confidentBin1 = newConfidentBin;
+  }
+  else if (confidentBin2.binNumber == notabin.binNumber || confidentBin2.binNumber == newConfidentBin.binNumber)
+  {
+    confidentBin2 = newConfidentBin;
+    
+    // Serial.println("We have two confident bin values.");
+    // Serial.print("bin1: "); Serial.println(confidentBin1.binNumber); 
+    // Serial.print("repeats: "); Serial.println(confidentBin1.repeats);
+    // Serial.print("bin2: "); Serial.println(confidentBin2.binNumber); 
+    // Serial.print("repeats: "); Serial.println(confidentBin2.repeats);
+    int binDifference = confidentBin1.binNumber - confidentBin2.binNumber;
+    // Serial.print("Difference: ");
+    Serial.print(binDifference);
+    // Serial.print(" Bits: ");
+    // Serial.print();
+    // Serial.print(" String: ");
+    // Serial.print();
+
+    // Cleanup
+    confidentBin1 = notabin;
+    confidentBin2 = notabin;
+  }
 }
 
 
