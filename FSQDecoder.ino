@@ -169,12 +169,12 @@ void loop()
     totalSoundingBins = 0;
 
   }// if FFT.available
-  else
-  {
-    Serial.println("No FFT data available.");
-    delay(5000);
-    return;
-  }
+//  else
+//  {
+//    Serial.println("No FFT data available.");
+//    delay(5000);
+//    return;
+//  }
 }
 
 void handleLoudestBin(struct Bin newLoudestBin)
@@ -567,7 +567,7 @@ bool valid_char(int ch)
 
 // https://github.com/w1hkj/fldigi/blob/master/src/fsq/fsq.cxx
 void processDifference(int difference)
-{
+{  
   int nibble = difference;
 	int curr_ch = -1;
 
@@ -578,6 +578,12 @@ void processDifference(int difference)
     Serial.println(difference);
 		return;
 	}
+  else
+  {
+    Serial.println();
+    Serial.print("DEBUG: processDifference() - difference is: ");
+    Serial.println(difference);
+  }
 
 	nibble = nibbles[nibble + 99];
 
