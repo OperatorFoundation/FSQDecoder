@@ -8,3 +8,7 @@ An Arduino program for decoding FSQ transmissions. This program is designed to w
 
  - The ArduinoIDE should be setup to work with your Teensy (install Teensyduino)
  - Set the USB type to "audio" under Tools > USBType
+
+ ###
+
+ Thanks to https://github.com/w1hkj/fldigi/
