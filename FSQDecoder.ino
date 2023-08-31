@@ -221,32 +221,6 @@ void handleLoudestBin(struct Bin newLoudestBin)
   }
 }
 
-// test for valid callsign
-// returns:
-// 0 - not a callsign
-// 1 - mycall
-// 2 - allcall
-// 4 - cqcqcq
-// 8 - any other valid call
-int valid_callsign(std::string s)
-{
-	if (s.length() < 3) return 0;
-	if (s.length() > 20) return 0;
-
-	if (s == allcall) return 2;
-	if (s == cqcqcq) return 4;
-	// if (s == mycall) return 1;
-	if (s.find("Heard") != std::string::npos) return 0;
-
-  // FIXME:
-	// static char sz[21];
-	// memset(sz, 0, 21);
-	// strcpy(sz, s.c_str());
-	// bool matches = call.match(sz);
-	// return (matches ? 8 : 0);
-  return 8;
-}
-
 void parse_rx_text()
 {
 	toprint.clear();
@@ -414,7 +388,6 @@ bool valid_char(int ch)
 	return false;
 }
 
-// https://github.com/w1hkj/fldigi/blob/master/src/fsq/fsq.cxx
 void processDifference(int difference)
 {  
   int nibble = difference;
@@ -446,15 +419,15 @@ void processDifference(int difference)
     {
       // single-nibble characters
 			curr_ch = wsq_varidecode[prev_nibble];
-      Serial.print("Single nibble - curr_ch: ");
-      Serial.println(curr_ch);
+      // Serial.print("Single nibble - curr_ch: ");
+      // Serial.println(curr_ch);
 		} 
     else if ( (prev_nibble < 29) && (curr_nibble > 28) && (curr_nibble < 32)) 
     {
       // double-nibble characters
 			curr_ch = wsq_varidecode[prev_nibble * 32 + curr_nibble];
-      Serial.print("Double nibble - curr_ch: ");
-      Serial.println(curr_ch);
+      // Serial.print("Double nibble - curr_ch: ");
+      // Serial.println(curr_ch);
 		}
 
 		if (curr_ch > 0) 
@@ -462,7 +435,8 @@ void processDifference(int difference)
 			if ( valid_char(curr_ch)) 
       {
 				if (rx_text.length() > 32768) rx_text.clear();
-        rx_text += curr_ch;
+        rx_text += fsq_ascii[curr_ch];
+
 				parse_rx_text();
 			}
       else 
