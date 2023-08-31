@@ -6,9 +6,10 @@
 #include <cmath>
 #include <math.h>
 
+#include "CRC8.h"
 #include "FSQVaricode.h"
 #include "FSQ.h"
-#include "RE.h"
+//#include "RE.h"
 
 #define LED_PIN    13
 #define OLED_RESET -1
@@ -167,7 +168,13 @@ void loop()
     loudestBin = {-1, -1, 0};
     totalSoundingBins = 0;
 
-  } // if FFT.available
+  }// if FFT.available
+  else
+  {
+    Serial.println("No FFT data available.");
+    delay(5000);
+    return;
+  }
 }
 
 void handleLoudestBin(struct Bin newLoudestBin)
