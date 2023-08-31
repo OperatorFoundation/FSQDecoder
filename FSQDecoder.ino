@@ -16,11 +16,6 @@
 
 #define NIT std::string::npos
 
-static std::string triggers = " !#$%&'()*+,-.;<=>?@[\\]^_{|}~";
-static std::string allcall = "allcall";
-static std::string cqcqcq = "cqcqcq";
-// static fre_t call("([[:alnum:]]?[[:alpha:]/]+[[:digit:]]+[[:alnum:]/]+)", REG_EXTENDED);
-
 const int myInput = AUDIO_INPUT_LINEIN;
 //const int myInput = AUDIO_INPUT_MIC;
 
@@ -223,8 +218,6 @@ void handleLoudestBin(struct Bin newLoudestBin)
 
 void parse_rx_text()
 {
-	toprint.clear();
-
 	if (rx_text.empty()) return;
 
 	if (rx_text.length() > 65536) 
@@ -232,124 +225,6 @@ void parse_rx_text()
 		rx_text.clear();
 		return;
 	}
-
-	// size_t p = rx_text.find(':');
-  // Serial.print("Found : at ");
-  // Serial.println(p);
-
-	// if (p == 0) 
-  // {
-	// 	rx_text.erase(0,1);
-	// 	return;
-	// }
-
-	// if (p == std::string::npos || rx_text.length() < p + 2) 
-  // {
-  //   Serial.println("Invalid value for p. Giving up.");
-	// 	return;
-	// }
-
-	// std::string rxcrc = rx_text.substr(p+1,2);
-
-	// int max = p+1;
-	// if (max > 20) max = 20;
-	// std::string substr;
-
-	// for (int i = 1; i < max; i++) 
-  // {
-	// 	if (rx_text[p-i] <= ' ' || rx_text[p-i] > 'z') 
-  //   {
-	// 		rx_text.erase(0, p+1);
-	// 		return;
-	// 	}
-
-	// 	substr = rx_text.substr(p-i, i);
-
-	// 	if ((crc.sval(substr) == rxcrc) && valid_callsign(substr)) 
-  //   {
-	// 		station_calling = substr;
-	// 		break;
-	// 	}
-	// }
-
-  // // remove station_calling, colon and checksum
-	// rx_text.erase(0, p+3);
-
-  // // extract all directed callsigns
-  // // look for 'allcall', 'cqcqcq' or mycall
-
-	// bool all = false;
-	// bool directed = false;
-
-  // // test next word in std::string
-	// size_t tr_pos = 0;
-	// char tr = rx_text[tr_pos];
-	// size_t trigger = triggers.find(tr);
-
-  // // strip any leading spaces before either text or first directed callsign
-
-	// while (rx_text.length() > 1 && triggers.find(rx_text[0]) != std::string::npos)
-	// 	rx_text.erase(0,1);
-
-  // // find first word
-	// while ( tr_pos < rx_text.length() && ((trigger = triggers.find(rx_text[tr_pos])) == std::string::npos) ) 
-  // {
-	// 	tr_pos++;
-	// }
-
-	// while (trigger != std::string::npos && tr_pos < rx_text.length()) 
-  // {
-	// 	int word_is = valid_callsign(rx_text.substr(0, tr_pos));
-
-	// 	if (word_is == 0) 
-  //   {
-	// 		rx_text.insert(0," ");
-	// 		break; // not a callsign
-	// 	}
-
-	// 	if (word_is == 1) 
-  //   {
-	// 		directed = true; // mycall
-	// 	}
-	// 	// test for cqcqcq and allcall
-	// 	else if (word_is != 8)
-  //   {
-  //     all = true;
-  //   }
-
-	// 	rx_text.erase(0, tr_pos);
-
-	// 	while (rx_text.length() > 1 && (rx_text[0] == ' ' && rx_text[1] == ' '))
-  //   {
-  //     rx_text.erase(0,1);
-  //   }
-
-	// 	if (rx_text[0] != ' ') break;
-
-	// 	rx_text.erase(0, 1);
-
-	// 	tr_pos = 0;
-	// 	tr = rx_text[tr_pos];
-	// 	trigger = triggers.find(tr);
-
-	// 	while ( tr_pos < rx_text.length() && (trigger == std::string::npos) ) 
-  //   {
-	// 		tr_pos++;
-	// 		tr = rx_text[tr_pos];
-	// 		trigger = triggers.find(tr);
-	// 	}
-	// }
-
-	// if ( (all == false) && (directed == false)) {
-	// 	rx_text.clear();
-	// 	return;
-	// }
-
-  // // remove eot if present
-	// if (rx_text.length() > 3) rx_text.erase(rx_text.length() - 3);
-
-	// toprint.assign(station_calling).append(":");
-
 
   Serial.print("rx_text: ");
   Serial.println(String(rx_text.c_str()));
