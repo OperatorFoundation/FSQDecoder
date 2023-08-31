@@ -16,9 +16,6 @@
 
 #define NIT std::string::npos
 
-static const char *FSQBOL = " \n";
-static const char *FSQEOL = "\n ";
-static const char *FSQEOT = "  \b  ";
 static std::string triggers = " !#$%&'()*+,-.;<=>?@[\\]^_{|}~";
 static std::string allcall = "allcall";
 static std::string cqcqcq = "cqcqcq";
@@ -96,10 +93,6 @@ void setup()
 
   prev_nibble = 0;
   curr_nibble = 0;
-  ch_sqlch_open = false;
-  b_bot = false;
-  b_eol = false;
-  b_eot = false;
 
   delay(1000);
   initNibbles();
@@ -167,14 +160,7 @@ void loop()
     // Cleanup
     loudestBin = {-1, -1, 0};
     totalSoundingBins = 0;
-
-  }// if FFT.available
-//  else
-//  {
-//    Serial.println("No FFT data available.");
-//    delay(5000);
-//    return;
-//  }
+  }
 }
 
 void handleLoudestBin(struct Bin newLoudestBin)
@@ -263,221 +249,137 @@ int valid_callsign(std::string s)
 
 void parse_rx_text()
 {
-	// char ztbuf[20];
-	// struct timeval tv;
-	// gettimeofday(&tv, NULL);
-	// struct tm tm;
-	// time_t t_temp;
-	// t_temp=(time_t)tv.tv_sec;
-	// gmtime_r(&t_temp, &tm);
-	// strftime(ztbuf, sizeof(ztbuf), "%Y%m%d,%H%M%S", &tm);
-
 	toprint.clear();
 
 	if (rx_text.empty()) return;
+
 	if (rx_text.length() > 65536) 
   {
 		rx_text.clear();
 		return;
 	}
 
-	// state = TEXT;
+	// size_t p = rx_text.find(':');
+  // Serial.print("Found : at ");
+  // Serial.println(p);
 
-	size_t p = rx_text.find(':');
-	if (p == 0) 
-  {
-		rx_text.erase(0,1);
-		return;
-	}
-
-	if (p == std::string::npos || rx_text.length() < p + 2) 
-  {
-		return;
-	}
-
-	std::string rxcrc = rx_text.substr(p+1,2);
-
-	int max = p+1;
-	if (max > 20) max = 20;
-	std::string substr;
-
-	for (int i = 1; i < max; i++) 
-  {
-		if (rx_text[p-i] <= ' ' || rx_text[p-i] > 'z') 
-    {
-			rx_text.erase(0, p+1);
-			return;
-		}
-
-		substr = rx_text.substr(p-i, i);
-
-		if ((crc.sval(substr) == rxcrc) && valid_callsign(substr)) 
-    {
-			station_calling = substr;
-			break;
-		}
-	}
-
-	// if (station_calling == mycall) 
-  // { 
-  //   // do not display any of own rx stream
-	// 	Serial.println("Station calling is mycall: %s", station_calling.c_str());
-	// 	rx_text.erase(0, p+3);
+	// if (p == 0) 
+  // {
+	// 	rx_text.erase(0,1);
 	// 	return;
 	// }
 
-	// if (!station_calling.empty()) 
+	// if (p == std::string::npos || rx_text.length() < p + 2) 
   // {
-	// 	REQ(add_to_heard_list, station_calling, szestimate);
-	// 	if (enable_heard_log) 
+  //   Serial.println("Invalid value for p. Giving up.");
+	// 	return;
+	// }
+
+	// std::string rxcrc = rx_text.substr(p+1,2);
+
+	// int max = p+1;
+	// if (max > 20) max = 20;
+	// std::string substr;
+
+	// for (int i = 1; i < max; i++) 
+  // {
+	// 	if (rx_text[p-i] <= ' ' || rx_text[p-i] > 'z') 
   //   {
-	// 		std::string sheard = ztbuf;
-	// 		sheard.append(",").append(station_calling);
-	// 		sheard.append(",").append(szestimate).append("\n");
-	// 		heard_log << sheard;
-	// 		heard_log.flush();
+	// 		rx_text.erase(0, p+1);
+	// 		return;
+	// 	}
+
+	// 	substr = rx_text.substr(p-i, i);
+
+	// 	if ((crc.sval(substr) == rxcrc) && valid_callsign(substr)) 
+  //   {
+	// 		station_calling = substr;
+	// 		break;
 	// 	}
 	// }
 
-  // remove station_calling, colon and checksum
-	rx_text.erase(0, p+3);
+  // // remove station_calling, colon and checksum
+	// rx_text.erase(0, p+3);
 
-  // extract all directed callsigns
-  // look for 'allcall', 'cqcqcq' or mycall
+  // // extract all directed callsigns
+  // // look for 'allcall', 'cqcqcq' or mycall
 
-	bool all = false;
-	bool directed = false;
+	// bool all = false;
+	// bool directed = false;
 
-  // test next word in std::string
-	size_t tr_pos = 0;
-	char tr = rx_text[tr_pos];
-	size_t trigger = triggers.find(tr);
+  // // test next word in std::string
+	// size_t tr_pos = 0;
+	// char tr = rx_text[tr_pos];
+	// size_t trigger = triggers.find(tr);
 
-  // strip any leading spaces before either text or first directed callsign
+  // // strip any leading spaces before either text or first directed callsign
 
-	while (rx_text.length() > 1 &&
-		triggers.find(rx_text[0]) != std::string::npos)
-		rx_text.erase(0,1);
+	// while (rx_text.length() > 1 && triggers.find(rx_text[0]) != std::string::npos)
+	// 	rx_text.erase(0,1);
 
-  // find first word
-	while ( tr_pos < rx_text.length() && ((trigger = triggers.find(rx_text[tr_pos])) == std::string::npos) ) 
-  {
-		tr_pos++;
-	}
-
-	while (trigger != std::string::npos && tr_pos < rx_text.length()) 
-  {
-		int word_is = valid_callsign(rx_text.substr(0, tr_pos));
-
-		if (word_is == 0) 
-    {
-			rx_text.insert(0," ");
-			break; // not a callsign
-		}
-
-		if (word_is == 1) 
-    {
-			directed = true; // mycall
-		}
-		// test for cqcqcq and allcall
-		else if (word_is != 8)
-    {
-      all = true;
-    }
-
-		rx_text.erase(0, tr_pos);
-
-		while (rx_text.length() > 1 && (rx_text[0] == ' ' && rx_text[1] == ' '))
-    {
-      rx_text.erase(0,1);
-    }
-
-		if (rx_text[0] != ' ') break;
-
-		rx_text.erase(0, 1);
-
-		tr_pos = 0;
-		tr = rx_text[tr_pos];
-		trigger = triggers.find(tr);
-
-		while ( tr_pos < rx_text.length() && (trigger == std::string::npos) ) 
-    {
-			tr_pos++;
-			tr = rx_text[tr_pos];
-			trigger = triggers.find(tr);
-		}
-	}
-
-	if ( (all == false) && (directed == false)) {
-		rx_text.clear();
-		return;
-	}
-
-  // remove eot if present
-	if (rx_text.length() > 3) rx_text.erase(rx_text.length() - 3);
-
-	toprint.assign(station_calling).append(":");
-
-  // test for trigger
-	tr = rx_text[0];
-	trigger = triggers.find(tr);
-
-	if (trigger == NIT) 
-  {
-		tr = ' '; // force to be text line
-		rx_text.insert(0, " ");
-	}
-
-  // if asleep suppress all but the * trigger
-
-	// if (btn_SELCAL->value() == 0) 
+  // // find first word
+	// while ( tr_pos < rx_text.length() && ((trigger = triggers.find(rx_text[tr_pos])) == std::string::npos) ) 
   // {
-	// 	if (tr == '*') parse_star();
+	// 	tr_pos++;
+	// }
+
+	// while (trigger != std::string::npos && tr_pos < rx_text.length()) 
+  // {
+	// 	int word_is = valid_callsign(rx_text.substr(0, tr_pos));
+
+	// 	if (word_is == 0) 
+  //   {
+	// 		rx_text.insert(0," ");
+	// 		break; // not a callsign
+	// 	}
+
+	// 	if (word_is == 1) 
+  //   {
+	// 		directed = true; // mycall
+	// 	}
+	// 	// test for cqcqcq and allcall
+	// 	else if (word_is != 8)
+  //   {
+  //     all = true;
+  //   }
+
+	// 	rx_text.erase(0, tr_pos);
+
+	// 	while (rx_text.length() > 1 && (rx_text[0] == ' ' && rx_text[1] == ' '))
+  //   {
+  //     rx_text.erase(0,1);
+  //   }
+
+	// 	if (rx_text[0] != ' ') break;
+
+	// 	rx_text.erase(0, 1);
+
+	// 	tr_pos = 0;
+	// 	tr = rx_text[tr_pos];
+	// 	trigger = triggers.find(tr);
+
+	// 	while ( tr_pos < rx_text.length() && (trigger == std::string::npos) ) 
+  //   {
+	// 		tr_pos++;
+	// 		tr = rx_text[tr_pos];
+	// 		trigger = triggers.find(tr);
+	// 	}
+	// }
+
+	// if ( (all == false) && (directed == false)) {
 	// 	rx_text.clear();
 	// 	return;
 	// }
 
-  // now process own call triggers
-	// if (directed) 
-  // {
-	// 	switch (tr) 
-  //   {
-	// 		case ' ': parse_space(false);   break;
-	// 		case '?': parse_qmark();   break;
-	// 		case '*': parse_star();    break;
-	// 		case '+': parse_plus();    break;
-	// 		case '-': break;//parse_minus();   break;
-	// 		case ';': parse_relay();    break;
-	// 		case '!': parse_repeat();    break;
-	// 		case '~': parse_delayed_repeat();   break;
-	// 		case '#': parse_pound();   break;
-	// 		case '$': parse_dollar();  break;
-	// 		case '@': parse_at();      break;
-	// 		case '&': parse_amp();     break;
-	// 		case '^': parse_carat();   break;
-	// 		case '%': parse_pcnt();    break;
-	// 		case '|': parse_vline();   break;
-	// 		case '>': parse_greater(); break;
-	// 		case '<': parse_less();    break;
-	// 		case '[': parse_relayed(); break;
-	// 	}
-	// }
+  // // remove eot if present
+	// if (rx_text.length() > 3) rx_text.erase(rx_text.length() - 3);
 
-  // // if allcall; only respond to the ' ', '*', '#', '%', and '[' triggers
-	// else {
-	// 	switch (tr) 
-  //   {
-	// 		case ' ': parse_space(true);   break;
-	// 		case '*': parse_star();    break;
-	// 		case '#': parse_pound();   break;
-	// 		case '%': parse_pcnt();    break;
-	// 		case '[': parse_relayed(); break;
-	// 	}
-	// }
+	// toprint.assign(station_calling).append(":");
+
 
   Serial.print("rx_text: ");
   Serial.println(String(rx_text.c_str()));
-	rx_text.clear();
+  Serial.println();
 }
 
 void handleConfidentBin(struct Bin newConfidentBin)
@@ -490,11 +392,6 @@ void handleConfidentBin(struct Bin newConfidentBin)
   {
     confidentBin2 = newConfidentBin;
     
-    // Serial.println("We have two confident bin values.");
-    // Serial.print("bin1: "); Serial.println(confidentBin1.binNumber); 
-    // Serial.print("repeats: "); Serial.println(confidentBin1.repeats);
-    // Serial.print("bin2: "); Serial.println(confidentBin2.binNumber); 
-    // Serial.print("repeats: "); Serial.println(confidentBin2.repeats);
     int binDifference =  confidentBin2.binNumber - confidentBin1.binNumber;
     // Serial.print("Difference: ");
     // Serial.println(binDifference);
@@ -509,54 +406,6 @@ void handleConfidentBin(struct Bin newConfidentBin)
     confidentBin2 = notabin;
   }
 }
-
-void lfCheck(int ch)
-{
-	static char lfpair[3] = "01";
-	static char bstrng[4] = "012";
-
-	lfpair[0] = lfpair[1];
-	lfpair[1] = 0xFF & ch;
-
-	bstrng[0] = bstrng[1];
-	bstrng[1] = bstrng[2];
-	bstrng[2] = 0xFF & ch;
-
-	if (bstrng[0] == FSQEOT[0]    // find SP SP BS SP
-		&& bstrng[1] == FSQEOT[1]
-		&& bstrng[2] == FSQEOT[2]
-		) {
-		b_eot = true;
-	} else if (lfpair[0] == FSQBOL[0] && lfpair[1] == FSQBOL[1]) {
-		b_bot = true;
-	} else if (lfpair[0] == FSQEOL[0] && lfpair[1] == FSQEOL[1]) {
-		b_eol = true;
-	}
-}
-
-bool fsq_squelch_open()
-{
-  // FIXME
-	// return ch_sqlch_open || metric >= progStatus.sldrSquelchValue;
-  return ch_sqlch_open;
-}
-
-// void write_rx_mon_char(int ch)
-// {
-// 	int ach = ch & 0xFF;
-// 	if (!progdefaults.fsq_directed) 
-//   {
-// 		display_fsq_rx_text(fsq_ascii[ach], FTextBase::FSQ_UND);
-
-// 		if (ach == '\n')
-// 			display_fsq_rx_text(fsq_lf, FTextBase::FSQ_UND);
-// 	}
-
-// 	display_fsq_mon_text(fsq_ascii[ach], FTextBase::RECV);
-
-// 	if (ach == '\n')
-// 		display_fsq_mon_text(fsq_lf, FTextBase::RECV);
-// }
 
 bool valid_char(int ch)
 {
@@ -574,115 +423,52 @@ void processDifference(int difference)
 	if (nibble < -99 || nibble > 99) 
   {
 		Serial.println();
-    Serial.print("processDifference() - invalid bin difference provided: ");
+    Serial.print("DEBUG: processDifference() - invalid bin difference provided: ");
     Serial.println(difference);
 		return;
 	}
-  else
-  {
-    Serial.println();
-    Serial.print("DEBUG: processDifference() - difference is: ");
-    Serial.println(difference);
-  }
 
-	nibble = nibbles[nibble + 99];
+  int nibbleIndex = difference + 99;
+	nibble = nibbles[nibbleIndex];
 
-  // -1 is our idle differencebol, indicating we already have our differencebol
+  // Serial.print("Nibble index (difference + 99) is: ");
+  // Serial.println(nibbleIndex);
+  // Serial.print("Nibble found at index: ");
+  // Serial.println(nibble);
+
+  // -1 is our idle difference, indicating we already have our difference
 	if (nibble >= 0) 
   { 
     // process nibble
 		curr_nibble = nibble;
 
-    
 		if ((prev_nibble < 29) & (curr_nibble < 29)) 
     {
       // single-nibble characters
 			curr_ch = wsq_varidecode[prev_nibble];
+      Serial.print("Single nibble - curr_ch: ");
+      Serial.println(curr_ch);
 		} 
     else if ( (prev_nibble < 29) && (curr_nibble > 28) && (curr_nibble < 32)) 
     {
       // double-nibble characters
 			curr_ch = wsq_varidecode[prev_nibble * 32 + curr_nibble];
+      Serial.print("Double nibble - curr_ch: ");
+      Serial.println(curr_ch);
 		}
+
 		if (curr_ch > 0) 
     {
-			// if (enable_audit_log) 
-      // {
-			// 	audit_log << fsq_ascii[curr_ch];// & 0xFF];
-			// 	if (curr_ch == '\n') audit_log << '\n';
-			// 	audit_log.flush();
-			// }
-
-			lfCheck(curr_ch);
-
-			if (b_bot) 
+			if ( valid_char(curr_ch)) 
       {
-				ch_sqlch_open = true;
-				// rx_text.clear();
-			}
-
-			// if (fsq_squelch_open()) 
-      // {
-			// 	// write_rx_mon_char(curr_ch);
-      //   Serial.print(curr_ch);
-			// 	if (b_bot)
-      //   {
-      //     char ztbuf[20];
-      //     struct timeval tv;
-      //     gettimeofday(&tv,NULL);
-      //     struct tm tm;
-      //     time_t t_temp;
-      //     t_temp=(time_t)tv.tv_sec;
-      //     gmtime_r(&t_temp, &tm);
-      //     strftime(ztbuf,sizeof(ztbuf),"%m/%d %H:%M:%S ",&tm);
-      //     display_fsq_mon_text( ztbuf, FTextBase::CTRL);
-      //     display_fsq_mon_text( fsq_bot, FTextBase::CTRL);
-      //   }
-			// 	if (b_eol) 
-      //   {
-			// 		display_fsq_mon_text( fsq_eol, FTextBase::CTRL);
-			// 		noisefilt->reset();
-			// 		noisefilt->run(1);
-			// 		sigfilt->reset();
-			// 		sigfilt->run(1);
-			// 		snprintf(szestimate, sizeof(szestimate), "%.0f db", s2n );
-			// 	}
-			// 	if (b_eot) 
-      //   {
-			// 		snprintf(szestimate, sizeof(szestimate), "%.0f db", s2n );
-			// 		noisefilt->reset();
-			// 		noisefilt->run(1);
-			// 		sigfilt->reset();
-			// 		sigfilt->run(1);
-			// 		display_fsq_mon_text( fsq_eot, FTextBase::CTRL);
-			// 	}
-			// }
-
-			if ( valid_char(curr_ch) || b_eol || b_eot ) 
-      {
-				// if (rx_text.length() > 32768) rx_text.clear();
-
-				// if ( fsq_squelch_open() || !progStatus.sqlonoff ) 
-        if ( fsq_squelch_open())
-        {
-					rx_text += curr_ch;
-					if (b_eot) 
-          {
-						parse_rx_text();
-						// if (state == TEXT) ch_sqlch_open = false;
-					}
-				}
+				if (rx_text.length() > 32768) rx_text.clear();
+        rx_text += curr_ch;
+				parse_rx_text();
 			}
       else 
       {
         Serial.println("Not a valid char");
       }
-
-
-			if (fsq_squelch_open() && (b_eot || b_eol)) 
-      {
-				ch_sqlch_open = false;
-			}
 		}
 
 		prev_nibble = curr_nibble;
@@ -700,7 +486,7 @@ void initNibbles()
 		if (nibble < 0) nibble += 33;
 		if (nibble > 32) nibble -= 33;
 
-		// adjust for +1 differencebol at the transmitter
+		// adjust for +1 difference at the transmitter
 		nibble--;
 		nibbles[i] = nibble;
 	}

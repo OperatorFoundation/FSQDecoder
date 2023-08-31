@@ -16,9 +16,4 @@ int	prev_nibble;
 
 CRC8 crc;
 
-bool ch_sqlch_open;
-bool b_bot;
-bool b_eol;
-bool b_eot;
-
 #endif
